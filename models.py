@@ -36,7 +36,7 @@ class Chore(models.Model):
     name = models.CharField(max_length=200)
     list = models.ForeignKey(Checklist, on_delete=models.CASCADE)
 
-    def log(self, dtg=datetime.now()):
+    def log(self, dtg=datetime.now(), note=""):
         new_entry = Record.objects.create(chore=self, timestamp=dtg)
         return new_entry
 
@@ -64,7 +64,7 @@ class Chore(models.Model):
 
 class Record(models.Model):
     chore = models.ForeignKey(Chore, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now=True)
+    timestamp = models.DateTimeField()
 
     def as_dict(self):
         return {

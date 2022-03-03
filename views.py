@@ -163,7 +163,14 @@ class ChoreLogAPI(View):
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
-        new_record = chore.log()
+        dtg = datetime.now()
+        if 'date' in request.GET.keys():
+            dtg = request.GET['date']
+            dtg = dtg.replace('Z', "+00:00")
+            dtg = datetime.fromisoformat(dtg)
+        note = request.GET['note'] if 'note' in request.GET.keys() else request.GET['note']
+        print(f'Logging chore {pk} at {dtg} with note {note}')
+        new_record = chore.log(dtg, note)
         return JsonResponse(new_record.as_dict())
 
 
