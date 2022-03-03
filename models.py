@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-import random
+import uuid
 from datetime import datetime
 
 
@@ -80,16 +80,20 @@ class Record(models.Model):
 
 class Token(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    token = models.BigIntegerField()
+    token = models.UUIDField(default=uuid.uuid4)
 
 
-def generate_token(user):
+def generate_token(user: User) -> Token:
+    """
+    @params user: User to create token for
+    @returns Token
+    """
     # TODO: revoke previous tokens?
 
     exists = True
     token = None
     while exists:
-        token = random.randint(10 ** 16, 10 ** 17 - 1)
+        token = uuid.uuid4()
         try:
             token_instance = Token.objects.get(token=token)
         except Token.DoesNotExist:

@@ -7,13 +7,14 @@ from .models import generate_token, Checklist, Chore, Token, Record
 
 from datetime import datetime
 
-import random
+import uuid
 
 
-def authenticate_with_token(token: int or str) -> User or None:
+def authenticate_with_token(token: uuid.UUID or str) -> User or None:
     try:
         token = Token.objects.get(token=token)
-    except Token.DoesNotExist:
+    except Token.DoesNotExist as e:
+        print(f"Incorrect token {token}: {e}")
         return None
 
     return token.user
@@ -21,6 +22,7 @@ def authenticate_with_token(token: int or str) -> User or None:
 
 def authenticate_request(request) -> User or None:
     if 'token' not in request.headers:
+        print('No token found in the request.')
         return None
 
     return authenticate_with_token(request.headers['token'])
