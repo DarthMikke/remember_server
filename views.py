@@ -110,16 +110,17 @@ class ChecklistReadAPI(View):
 
 
 class ChecklistUpdateAPI(View):
-    def get(self, request, pk):
+    def post(self, request, pk):
         user = authenticate_request(request)
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        if 'name' not in request.GET.keys():
+        if 'name' not in request.POST.keys():
             return JsonResponse({'error': 'bad request'}, status=400)
 
         checklist = user.checklist_set.get(id=pk)
-        checklist.name = request.GET['name']
+        checklist.name = request.POST['name']
+        checklist.save()
         return JsonResponse(checklist.as_dict())
 
 
