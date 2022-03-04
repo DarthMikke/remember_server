@@ -170,8 +170,8 @@ class ChoreLogAPI(View):
             dtg = datetime.fromisoformat(dtg)
         note = request.GET['note'] if 'note' in request.GET.keys() else request.GET['note']
         print(f'Logging chore {pk} at {dtg} with note {note}')
-        new_record = chore.log(dtg, note)
-        return JsonResponse(new_record.as_dict())
+        log = chore.log(dtg, note)
+        return JsonResponse(log.chore.as_deep_dict())
 
 
 class ChoreReadAPI(View):
@@ -244,7 +244,7 @@ class LogUpdateAPI(View):
 
         log.timestamp = new_timestamp
         log.save()
-        return JsonResponse(log.as_dict())
+        return JsonResponse(log.chore.as_deep_dict())
 
 
 class LogDeleteAPI(View):
@@ -258,4 +258,4 @@ class LogDeleteAPI(View):
             return JsonResponse({'error': 'not found'}, status=404)
 
         log.delete()
-        return JsonResponse(log.as_dict())
+        return JsonResponse(log.chore.as_deep_dict())
