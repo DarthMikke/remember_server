@@ -40,23 +40,26 @@ class Chore(models.Model):
         new_entry = Record.objects.create(chore=self, timestamp=dtg)
         return new_entry
 
-    def last(self):
+    def last(self) -> datetime or None:
+        """
+        Return last time this task was logged.
+        @returns datetime|None
+        """
         if len(self.record_set.all()) == 0:
             return None
 
-        return self.record_set.last().timestamp
+        return self.ordered_logs()[0].timestamp
+
+    def ordered_logs(self):
+        return self.record_set.order_by('-timestamp')
 
     def as_dict(self):
         return {'id': self.id, 'name': self.name, 'list': self.list.id, 'last_logged': self.last()}
 
     def as_deep_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'list': self.list.id,
-            'last_logged': self.last(),
-            'logs': [x.as_dict() for x in self.record_set.all()],
-        }
+        base_dict = self.as_dict()
+        base_dict['logs'] = [x.as_dict() for x in self.ordered_logs()]
+        return base_dict
 
     def __str__(self):
         return self.name
