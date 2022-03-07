@@ -212,6 +212,12 @@ class ChoreUpdateAPI(View):
         if 'list' in request.GET.keys():
             new_list = Checklist.objects.get(owner=user, id=int(request.GET['list']))
             chore.list = new_list
+        if 'frequency' in request.GET.keys():
+            try:
+                frequency = float(request.POST['frequency'])
+            except ValueError as e:
+                return JsonResponse({'error': e}, status=400)
+            chore.frequency = frequency
         chore.save()
 
         return JsonResponse(chore.as_dict())
