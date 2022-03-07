@@ -204,15 +204,15 @@ class ChoreUpdateAPI(View):
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
-        if not ('name' in request.GET.keys() or 'list' in request.GET.keys()):
+        if not ('name' in request.POST.keys() or 'frequency' in request.POST.keys()):
             return JsonResponse({'error': 'bad request'}, status=400)
 
-        if 'name' in request.GET.keys():
-            chore.name = request.GET['name']
-        if 'list' in request.GET.keys():
-            new_list = Checklist.objects.get(owner=user, id=int(request.GET['list']))
+        if 'name' in request.POST.keys():
+            chore.name = request.POST['name']
+        if 'list' in request.POST.keys():
+            new_list = Checklist.objects.get(owner=user, id=int(request.POST['list']))
             chore.list = new_list
-        if 'frequency' in request.GET.keys():
+        if 'frequency' in request.POST.keys():
             try:
                 frequency = float(request.POST['frequency'])
             except ValueError as e:
