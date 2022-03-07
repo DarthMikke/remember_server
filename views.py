@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views import View
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import generate_token, Checklist, Chore, Token, Record
@@ -29,6 +30,11 @@ def authenticate_request(request) -> User or None:
 
 
 # Create your views here.
+@ensure_csrf_cookie
+def csrf(request):
+    return HttpResponse("success")
+
+
 class ChoresView(View):
     def get(self, request):
         return render(request, 'chores.html')

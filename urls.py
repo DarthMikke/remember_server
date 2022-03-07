@@ -4,6 +4,7 @@ from .views import *
 urlpatterns = [
     path('index.html', ChoresView.as_view(), name='index'),
     path('app.html', ChoresView.as_view(), name='app'),
+    path('api/cookie', csrf, name='csrf'),
     # User management
     path('api/register', RegisterAPI.as_view(), name='api_register'),
     path('api/login', LoginAPI.as_view(), name='api_login'),
