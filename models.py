@@ -10,8 +10,8 @@ class Checklist(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
 
-    def add_chore(self, name):
-        instance = Chore.objects.create(list=self, name=name)
+    def add_chore(self, name, frequency):
+        instance = Chore.objects.create(list=self, name=name, frequency=frequency)
         return instance
 
     def as_dict(self):
@@ -35,6 +35,7 @@ class Checklist(models.Model):
 class Chore(models.Model):
     name = models.CharField(max_length=200)
     list = models.ForeignKey(Checklist, on_delete=models.CASCADE)
+    frequency = models.FloatField(default=7.0)
 
     def log(self, dtg=datetime.now(), note=""):
         new_entry = Record.objects.create(chore=self, timestamp=dtg)
@@ -54,7 +55,13 @@ class Chore(models.Model):
         return self.record_set.order_by('-timestamp')
 
     def as_dict(self):
-        return {'id': self.id, 'name': self.name, 'list': self.list.id, 'last_logged': self.last()}
+        return {
+            'id': self.id,
+            'frequency': self.frequency,
+            'name': self.name,
+            'list': self.list.id,
+            'last_logged': self.last()
+        }
 
     def as_deep_dict(self):
         base_dict = self.as_dict()
