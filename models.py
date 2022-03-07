@@ -35,6 +35,7 @@ class Checklist(models.Model):
 class Chore(models.Model):
     name = models.CharField(max_length=200)
     list = models.ForeignKey(Checklist, on_delete=models.CASCADE)
+    frequency = models.FloatField(default=7.0)
 
     def log(self, dtg=datetime.now(), note=""):
         new_entry = Record.objects.create(chore=self, timestamp=dtg)
