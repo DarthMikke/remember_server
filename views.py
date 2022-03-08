@@ -148,12 +148,12 @@ class ChoreCreateAPI(View):
         if 'name' not in request.POST.keys():
             return JsonResponse({'error': 'bad request'}, status=400)
 
-        frequency = None
-        if 'frequency' in request.POST.keys():
+        frequency = 7
+        if 'frequency' in request.POST.keys() and request.POST['frequency'] != '':
             try:
                 frequency = float(request.POST['frequency'])
             except ValueError as e:
-                return JsonResponse({'error': e}, status=400)
+                return JsonResponse({'error': str(e)}, status=400)
 
         checklist = Checklist.objects.get(id=pk)
         new_chore = checklist.add_chore(request.POST['name'], frequency)
