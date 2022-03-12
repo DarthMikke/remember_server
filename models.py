@@ -22,6 +22,7 @@ class Profile(models.Model):
 
 class Checklist(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=200)
 
     def add_chore(self, name, frequency):
