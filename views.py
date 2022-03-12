@@ -3,14 +3,14 @@ from django.views import View
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import generate_token, Checklist, Chore, Token, Record
+from .models import generate_profile_token, Checklist, Chore, Token, Record, Profile
 
 from datetime import datetime
 
 import uuid
 
 
-def authenticate_with_token(token: uuid.UUID or str) -> User or None:
+def authenticate_with_token(token: uuid.UUID or str) -> Profile or None:
     try:
         token = Token.objects.get(token=token)
     except Token.DoesNotExist as e:
@@ -20,7 +20,7 @@ def authenticate_with_token(token: uuid.UUID or str) -> User or None:
     return token.user
 
 
-def authenticate_request(request) -> User or None:
+def authenticate_request(request) -> Profile or None:
     if 'token' not in request.headers:
         print('No token found in the request.')
         return None
@@ -35,6 +35,9 @@ class ChoresView(View):
 
 
 class RegisterAPI(View):
+    """
+    Register using username, email and password.
+    """
     def post(self, request):
         keys = request.POST.keys()
         if not ('username' in keys and 'password' in keys and 'email' in keys):
@@ -47,11 +50,12 @@ class RegisterAPI(View):
         except User.DoesNotExist:
             pass
 
-        User.objects.create_user(
+        new_user = User.objects.create_user(
             username=request.POST['username'],
             password=request.POST['password'],
             email=request.POST['email']
         )
+        Profile.objects.create(authentication='password', user=new_user)
         return JsonResponse({'status': 'success'})
 
 
@@ -63,13 +67,13 @@ class LoginAPI(View):
 
         username = request.POST['username']
         password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is None:
+        profile = authenticate(request, username=username, password=password)
+        if profile is None:
             return JsonResponse({'error': 'wrong credentials'}, status=401)
 
         # generate token
-        token = generate_token(user).token
-        return JsonResponse({'username': username, 'access_token': token})
+        token = generate_profile_token(profile).token
+        return JsonResponse({'username': username, 'name': profile.name, 'access_token': token})
 
 
 class LogoutAPI(View):
@@ -96,7 +100,7 @@ class ChecklistCreateAPI(View):
         if 'name' not in request.POST.keys():
             return JsonResponse({'error': 'bad request'}, status=400)
 
-        new_checklist = Checklist.objects.create(owner=user, name=request.POST['name'])
+        new_checklist = Checklist.objects.create(profile=user, name=request.POST['name'])
         return JsonResponse(new_checklist.as_dict())
 
 
@@ -166,7 +170,7 @@ class ChoreLogAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__owner=user)
+        chore = Chore.objects.get(id=pk, list__profile=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -187,7 +191,7 @@ class ChoreReadAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__owner=user)
+        chore = Chore.objects.get(id=pk, list__profile=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -200,7 +204,7 @@ class ChoreUpdateAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__owner=user)
+        chore = Chore.objects.get(id=pk, list__profile=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -229,7 +233,7 @@ class ChoreDeleteAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__owner=user)
+        chore = Chore.objects.get(id=pk, list__profile=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
         chore.delete()
@@ -251,7 +255,7 @@ class LogUpdateAPI(View):
         except Exception as e:
             return JsonResponse({'error': e}, status=400)
 
-        log = Record.objects.get(id=pk, chore__list__owner=user)
+        log = Record.objects.get(id=pk, chore__list__profile=user)
         if log is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -266,7 +270,7 @@ class LogDeleteAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        log = Record.objects.get(id=pk, chore__list__owner=user)
+        log = Record.objects.get(id=pk, chore__list__profile=user)
         if log is None:
             return JsonResponse({'error': 'not found'}, status=404)
 

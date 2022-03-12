@@ -107,12 +107,18 @@ class Record(models.Model):
 
 
 class Token(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     token = models.UUIDField(default=uuid.uuid4)
+
+    def __str__(self):
+        user_string = f"user {self.user.username}" if self.user is not None else f"profile {self.profile}"
+        return f"Token {self.token} for {user_string}"
 
 
 def generate_token(user: User) -> Token:
     """
+    @deprecated since migration 0009
     @params user: User to create token for
     @returns Token
     """
@@ -128,3 +134,22 @@ def generate_token(user: User) -> Token:
             exists = False
 
     return Token.objects.create(user=user, token=token)
+
+
+def generate_profile_token(profile: Profile) -> Token:
+    """
+    @params profile: Profile to create token for
+    @returns Token
+    """
+    # TODO: revoke previous tokens?
+
+    exists = True
+    token = None
+    while exists:
+        token = uuid.uuid4()
+        try:
+            token_instance = Token.objects.get(token=token)
+        except Token.DoesNotExist:
+            exists = False
+
+    return Token.objects.create(profile=profile, token=token)
