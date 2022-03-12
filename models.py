@@ -19,6 +19,9 @@ class Profile(models.Model):
 
     name = models.CharField(max_length=200, null=True, blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Checklist(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)

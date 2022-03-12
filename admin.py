@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Checklist, Chore, Record, Token
+from .models import Checklist, Chore, Record, Token, Profile
 
 
 class TokenAdmin(admin.ModelAdmin):
@@ -7,6 +7,7 @@ class TokenAdmin(admin.ModelAdmin):
 
 
 # Register your models here.
+admin.site.register(Profile)
 admin.site.register(Checklist)
 admin.site.register(Chore)
 admin.site.register(Record)
