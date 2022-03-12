@@ -17,7 +17,7 @@ def authenticate_with_token(token: uuid.UUID or str) -> Profile or None:
         print(f"Incorrect token {token}: {e}")
         return None
 
-    return token.user
+    return token.profile
 
 
 def authenticate_request(request) -> Profile or None:
@@ -67,10 +67,13 @@ class LoginAPI(View):
 
         username = request.POST['username']
         password = request.POST['password']
-        profile = authenticate(request, username=username, password=password)
-        if profile is None:
+        user = authenticate(request, username=username, password=password)
+        if user is None:
             return JsonResponse({'error': 'wrong credentials'}, status=401)
 
+        profile = Profile.objects.get(user=user)
+        if profile is None:
+            return JsonResponse({'error': 'wrong credentials'}, status=401)
         # generate token
         token = generate_profile_token(profile).token
         return JsonResponse({'username': username, 'name': profile.name, 'access_token': token})
