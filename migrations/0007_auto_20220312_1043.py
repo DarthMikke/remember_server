@@ -7,14 +7,36 @@ def generate_profiles(apps, schema_editor):
     """
     Generate a profile for every user in the database.
     """
-    ...
+    db_alias = schema_editor.connection.alias
+
+    Checklist = apps.get_model('remember', 'Checklist')
+    Profile = apps.get_model('remember', 'Profile')
+    users = []
+    for checklist in Checklist.objects.all():
+        if checklist.owner in users:
+            continue
+
+        users.append(checklist.owner)
+
+    for user in users:
+        Profile.objects.using(db_alias).create(
+            authentication='password',
+            user=user,
+            name=user.username
+        )
 
 
 def add_profiles_to_checklists(apps, schema_editor):
     """
     Add owner's profile to every checklist in the database.
     """
-    ...
+    Checklist = apps.get_model('remember', 'Checklist')
+    Profile = apps.get_model('remember', 'Profile')
+
+    for checklist in Checklist.objects.all():
+        profile = Profile.objects.get(user=checklist.owner)
+        checklist.profile = profile
+        checklist.save()
 
 
 class Migration(migrations.Migration):
@@ -29,4 +51,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(generate_profiles),
+        migrations.RunPython(add_profiles_to_checklists),
     ]
