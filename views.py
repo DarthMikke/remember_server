@@ -103,7 +103,7 @@ class ChecklistCreateAPI(View):
         if 'name' not in request.POST.keys():
             return JsonResponse({'error': 'bad request'}, status=400)
 
-        new_checklist = Checklist.objects.create(profile=user, name=request.POST['name'])
+        new_checklist = Checklist.objects.create(owner=user, name=request.POST['name'])
         return JsonResponse(new_checklist.as_dict())
 
 
@@ -173,7 +173,7 @@ class ChoreLogAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__profile=user)
+        chore = Chore.objects.get(id=pk, list__owner=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -194,7 +194,7 @@ class ChoreReadAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__profile=user)
+        chore = Chore.objects.get(id=pk, list__owner=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -207,7 +207,7 @@ class ChoreUpdateAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__profile=user)
+        chore = Chore.objects.get(id=pk, list__owner=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -236,7 +236,7 @@ class ChoreDeleteAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        chore = Chore.objects.get(id=pk, list__profile=user)
+        chore = Chore.objects.get(id=pk, list__owner=user)
         if chore is None:
             return JsonResponse({'error': 'not found'}, status=404)
         chore.delete()
@@ -258,7 +258,7 @@ class LogUpdateAPI(View):
         except Exception as e:
             return JsonResponse({'error': e}, status=400)
 
-        log = Record.objects.get(id=pk, chore__list__profile=user)
+        log = Record.objects.get(id=pk, chore__list__owner=user)
         if log is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
@@ -273,7 +273,7 @@ class LogDeleteAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        log = Record.objects.get(id=pk, chore__list__profile=user)
+        log = Record.objects.get(id=pk, chore__list__owner=user)
         if log is None:
             return JsonResponse({'error': 'not found'}, status=404)
 
