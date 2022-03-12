@@ -6,6 +6,20 @@ from datetime import datetime
 
 
 # Create your models here.
+class Profile(models.Model):
+    AUTH_CHOICES = [
+        ('password', 'password'),
+        ('google', 'Google'),
+        ('apple', 'Apple'),
+    ]
+    authentication = models.CharField(max_length=200, choices=AUTH_CHOICES, default='password')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    google = models.CharField(max_length=200, null=True, blank=True)
+    apple = models.CharField(max_length=200, null=True, blank=True)
+
+    name = models.CharField(max_length=200, null=True, blank=True)
+
+
 class Checklist(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
