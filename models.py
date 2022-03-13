@@ -22,6 +22,26 @@ class Profile(models.Model):
     def __str__(self):
         return self.name
 
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'user': self.user.id,
+            'authentication': self.authentication,
+            'name': self.name
+        }
+
+    @staticmethod
+    def from_user(user):
+        """
+        Generate a profile from user
+        """
+        instance = Profile.objects.create(
+            authentication='password',
+            user=user,
+            name=user.username
+        )
+        return instance
+
 
 class Checklist(models.Model):
     owner_old = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -35,16 +55,17 @@ class Checklist(models.Model):
     def as_dict(self):
         return {
             'id': self.id,
+            'owner': self.owner.id,
             'name': self.name,
             'items': [x.id for x in self.chore_set.all()],
         }
 
     def as_deep_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'items': [x.as_dict() for x in self.chore_set.all()],
-        }
+        base = self.as_dict()
+        base['owner'] = self.owner.as_dict()
+        base['items'] = [x.as_dict() for x in self.chore_set.all()]
+        base['shared_with'] = []
+        return base
 
     def __str__(self):
         return f"{self.name} ({self.owner})"

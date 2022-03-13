@@ -23,4 +23,8 @@ urlpatterns = [
     # Logs
     path('api/log/<pk>/update', LogUpdateAPI.as_view(), name='log_update'),
     path('api/log/<pk>/delete', LogDeleteAPI.as_view(), name='log_delete'),
+    # Users
+    path('api/users/search', UserSearchAPI.as_view(), name='user_search'),
+    path('api/users/<int:pk>', UserInfoAPI.as_view(), name='user_info'),
+    path('api/users/me', UserInfoMeAPI.as_view(), name='user_me'),
 ]

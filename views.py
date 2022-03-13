@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views import View
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import generate_profile_token, Checklist, Chore, Token, Record, Profile
@@ -279,3 +279,36 @@ class LogDeleteAPI(View):
 
         log.delete()
         return JsonResponse(log.chore.as_deep_dict())
+
+
+class UserSearchAPI(View):
+    def get(self, request):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'query' not in request.GET.keys():
+            return JsonResponse({'error': 'bad_request'}, status=400)
+        profiles = Profile.objects.filter(user__email=request.GET['query'])
+
+        return JsonResponse({'total': len(profiles),
+                             'profiles': [x.as_dict() for x in profiles]})
+
+
+class UserInfoAPI(View):
+    def get(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        profile = Profile.objects.get(id=pk)
+        return JsonResponse(profile.as_dict())
+
+
+class UserInfoMeAPI(View):
+    def get(self, request):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        return HttpResponse(status=501)
