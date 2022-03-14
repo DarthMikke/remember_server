@@ -146,6 +146,36 @@ class ChecklistDeleteAPI(View):
         return JsonResponse(checklist.as_dict())
 
 
+class ChecklistShareAPI(View):
+    def post(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'profile' not in request.POST.keys():
+            return JsonResponse({'error': 'bad request'}, status=400)
+
+        checklist = user.checklist_set.get(id=pk)
+        if not checklist.share_with(int(request.POST['profile'])):
+            return JsonResponse({'error': 'user not found'}, status=404)
+        return JsonResponse(checklist.as_dict())
+
+
+class ChecklistUnshareAPI(View):
+    def post(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'profile' not in request.POST.keys():
+            return JsonResponse({'error': 'bad request'}, status=400)
+
+        checklist = user.checklist_set.get(id=pk)
+        if not checklist.unshare_with(int(request.POST['profile'])):
+            return JsonResponse({'error': 'user not found'}, status=404)
+        return JsonResponse(checklist.as_dict())
+
+
 class ChoreCreateAPI(View):
     def post(self, request, pk):
         user = authenticate_request(request)
