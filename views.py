@@ -320,8 +320,11 @@ class UserSearchAPI(View):
 
         if 'query' not in request.GET.keys():
             return JsonResponse({'error': 'bad_request'}, status=400)
-        profiles = Profile.objects.filter(user__email=request.GET['query'])
 
+        if request.GET['query'] == "":
+            return JsonResponse({'total': 0, 'profiles': []})
+
+        profiles = Profile.objects.filter(user__email__contains=request.GET['query'])
         return JsonResponse({'total': len(profiles),
                              'profiles': [x.as_dict() for x in profiles]})
 
