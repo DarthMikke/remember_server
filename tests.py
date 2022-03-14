@@ -54,6 +54,33 @@ class RegisterAPITestCase(TestCase):
 
 
 class ChecklistAPITestCase(TestCase):
+    test_password = 'test_password'
+
+    @classmethod
+    def setUpTestData(cls):
+        test_user = User.objects.create_user('test_user', 'test@ma.il', cls.test_password)
+        test_profile = Profile.objects.create(authentication='password', user=test_user)
+        cls.test_user = test_profile
+        cls.user_list = Checklist.objects.create(owner=test_profile, name='test list')
+
+        cls.users = [{
+            'username': f'test_user{x}',
+            'email': f'test_user{x}@example.com',
+            'password': 'test_password'
+        } for x in range(10)]
+
+        cls.profiles = []
+        for user in cls.users:
+            instance = User.objects.create_user(user['username'], user['email'], user['password'])
+            cls.profiles.append(Profile.from_user(instance))
+
+    def setUp(self):
+        self.client = Client()
+        test_data = {'username': self.test_user.user.username, 'password': self.test_password}
+        response = self.client.post(reverse('api_login'), test_data)
+        body = json.loads(response.content)
+        self.token = body['access_token']
+
     def test_add_checklist(self):
         ...
 
@@ -64,10 +91,28 @@ class ChecklistAPITestCase(TestCase):
         ...
 
     def test_share_checklist(self):
-        ...
+        path = reverse('checklist_share', args=[self.user_list.id])
+        response = self.client.post(
+            path,
+            data={'user': self.profiles[0].id},
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(self.user_list.is_accessible_by(self.profiles[0]), True)
 
     def test_unshare_checklist(self):
-        ...
+        path = reverse('checklist_share', args=[self.user_list.id])
+        response = self.client.post(
+            path,
+            data={'user': self.profiles[0].id},
+            HTTP_TOKEN=self.token
+        )
+        path = reverse('checklist_unshare', args=[self.user_list.id])
+        response = self.client.post(
+            path,
+            data={'user': self.profiles[0].id},
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(self.user_list.is_accessible_by(self.profiles[0]), False)
 
 
 class TaskAPITestCase(TestCase):

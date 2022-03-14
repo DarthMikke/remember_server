@@ -47,24 +47,44 @@ class Checklist(models.Model):
     owner_old = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     owner = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=200)
+    shared_with = models.ManyToManyField(Profile, related_name='shared_lists', blank=True)
 
+    # Actions
     def add_chore(self, name, frequency):
         instance = Chore.objects.create(list=self, name=name, frequency=frequency)
         return instance
 
+    def share_with(self, profile_id: int):
+        """
+        Share with a profile with a given id
+        @param profile_id: Profile's id
+        """
+
+    def unshare_with(self, profile_id):
+        """
+        Remove a profile with a given id from self.shared_with
+        @param profile_id: Profile's id
+        """
+
+    def is_accessible_by(self, profile: Profile):
+        """
+        Is the checklist accessible for a given profile?
+        @param profile: Profile
+        """
     def as_dict(self):
         return {
             'id': self.id,
             'owner': self.owner.id,
             'name': self.name,
             'items': [x.id for x in self.chore_set.all()],
+            'shared_with': [x.id for x in self.shared_with.all()]
         }
 
     def as_deep_dict(self):
         base = self.as_dict()
         base['owner'] = self.owner.as_dict()
         base['items'] = [x.as_dict() for x in self.chore_set.all()]
-        base['shared_with'] = []
+        base['shared_with'] = [x.as_dict() for x in self.shared_with.all()]
         return base
 
     def __str__(self):
@@ -114,13 +134,15 @@ class Chore(models.Model):
 class Record(models.Model):
     chore = models.ForeignKey(Chore, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
+    logged_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True)
 
     def as_dict(self):
         return {
             'id': self.id,
             'chore': self.chore.id,
             'timestamp': self.timestamp.isoformat(),
-            'note': ''
+            'note': '',
+            'logged_by': self.logged_by.as_dict()
         }
 
     def __str__(self):
