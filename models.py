@@ -59,18 +59,42 @@ class Checklist(models.Model):
         Share with a profile with a given id
         @param profile_id: Profile's id
         """
+        try:
+            profile = Profile.objects.get(id=profile_id)
+        except Profile.DoesNotExist:
+            return False
+
+        self.share_with(profile)
+        return True
+
+    def _share_with(self, profile: Profile):
+        self.shared_with.add(profile)
 
     def unshare_with(self, profile_id):
         """
         Remove a profile with a given id from self.shared_with
         @param profile_id: Profile's id
         """
+        try:
+            profile = Profile.objects.get(id=profile_id)
+        except Profile.DoesNotExist:
+            return False
+
+        self.shared_with.remove(profile)
+        return True
 
     def is_accessible_by(self, profile: Profile):
         """
         Is the checklist accessible for a given profile?
         @param profile: Profile
         """
+        if self.owner == profile:
+            return True
+        if profile.id in [x.id for x in self.shared_with.all()]:
+            return True
+        return False
+
+    # Read properties
     def as_dict(self):
         return {
             'id': self.id,
@@ -96,10 +120,12 @@ class Chore(models.Model):
     list = models.ForeignKey(Checklist, on_delete=models.CASCADE)
     frequency = models.FloatField(default=7.0)
 
+    # Actions
     def log(self, dtg=datetime.now(), note=""):
         new_entry = Record.objects.create(chore=self, timestamp=dtg)
         return new_entry
 
+    # Read properties
     def last(self) -> datetime or None:
         """
         Return last time this task was logged.
