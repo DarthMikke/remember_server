@@ -184,6 +184,24 @@ class UserAPITestCase(TestCase):
         self.assertEqual(body['total'], 1)
         self.assertEqual(body['profiles'][0]['id'], self.profiles[0].id)
 
+        response = self.client.get(
+            path + f'?query={self.users[0]["email"][:5]}',
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(response.status_code, 200)
+        body = json.loads(response.content)
+        self.assertTrue(self.profiles[0].id in [x['id'] for x in body['profiles']])
+
+    def test_user_search_empty(self):
+        path = reverse('user_search')
+        response = self.client.get(
+            path + '?query=',
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(response.status_code, 200)
+        body = json.loads(response.content)
+        self.assertEqual(body['total'], 0)
+
     def test_user_info(self):
         path = reverse('user_info', args=[self.profiles[1].id])
         response = self.client.get(
