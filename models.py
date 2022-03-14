@@ -64,11 +64,12 @@ class Checklist(models.Model):
         except Profile.DoesNotExist:
             return False
 
-        self.share_with(profile)
+        self._share_with(profile)
         return True
 
     def _share_with(self, profile: Profile):
         self.shared_with.add(profile)
+        self.save()
 
     def unshare_with(self, profile_id):
         """
@@ -81,6 +82,8 @@ class Checklist(models.Model):
             return False
 
         self.shared_with.remove(profile)
+        profile.save()
+        self.save()
         return True
 
     def is_accessible_by(self, profile: Profile):

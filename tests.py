@@ -94,24 +94,27 @@ class ChecklistAPITestCase(TestCase):
         path = reverse('checklist_share', args=[self.user_list.id])
         response = self.client.post(
             path,
-            data={'user': self.profiles[0].id},
+            data={'profile': self.profiles[0].id},
             HTTP_TOKEN=self.token
         )
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(self.user_list.is_accessible_by(self.profiles[0]), True)
 
     def test_unshare_checklist(self):
         path = reverse('checklist_share', args=[self.user_list.id])
         response = self.client.post(
             path,
-            data={'user': self.profiles[0].id},
+            data={'profile': self.profiles[0].id},
             HTTP_TOKEN=self.token
         )
         path = reverse('checklist_unshare', args=[self.user_list.id])
         response = self.client.post(
             path,
-            data={'user': self.profiles[0].id},
+            data={'profile': self.profiles[0].id},
             HTTP_TOKEN=self.token
         )
+        self.assertEqual(response.status_code, 200)
+        print(response.content)
         self.assertEqual(self.user_list.is_accessible_by(self.profiles[0]), False)
 
 

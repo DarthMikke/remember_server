@@ -171,7 +171,8 @@ class ChecklistUnshareAPI(View):
             return JsonResponse({'error': 'bad request'}, status=400)
 
         checklist = user.checklist_set.get(id=pk)
-        if not checklist.unshare_with(int(request.POST['profile'])):
+        result = checklist.unshare_with(int(request.POST['profile']))
+        if not result:
             return JsonResponse({'error': 'user not found'}, status=404)
         return JsonResponse(checklist.as_dict())
 

@@ -16,7 +16,7 @@ urlpatterns = [
     path('api/checklist/<pk>/delete', ChecklistDeleteAPI.as_view(), name='checklist_delete'),
     path('api/checklist/<pk>/add_chore', ChoreCreateAPI.as_view(), name='chore_add'),
     path('api/checklist/<pk>/share', ChecklistShareAPI.as_view(), name='checklist_share'),
-    path('api/checklist/<pk>/share', ChecklistUnshareAPI.as_view(), name='checklist_unshare'),
+    path('api/checklist/<pk>/unshare', ChecklistUnshareAPI.as_view(), name='checklist_unshare'),
     # Chores
     path('api/chore/<pk>/', ChoreReadAPI.as_view(), name='chore'),
     path('api/chore/<pk>/update', ChoreUpdateAPI.as_view(), name='chore_update'),
