@@ -171,7 +171,7 @@ class Record(models.Model):
             'chore': self.chore.id,
             'timestamp': self.timestamp.isoformat(),
             'note': '',
-            'logged_by': self.logged_by.as_dict()
+            'logged_by': None if self.logged_by is None else self.logged_by.as_dict()
         }
 
     def __str__(self):
