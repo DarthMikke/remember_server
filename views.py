@@ -90,7 +90,7 @@ class ChecklistListAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        lists = {'checklists': [x.as_dict() for x in user.checklist_set.all()]}
+        lists = {'checklists': [x.as_dict() for x in user.checklists()]}
         return JsonResponse(lists)
 
 
