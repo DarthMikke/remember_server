@@ -229,12 +229,21 @@ class ProfileTestCase(TestCase):
         self.client = Client()
 
         self.test_checklist = Checklist.objects.create(owner=self.test_user1, name="Test")
+        self.not_shared_checklist = Checklist.objects.create(owner=self.test_user1, name="Test 2")
 
     def test_list_aggregation(self):
         self.test_checklist.share_with(self.test_user2.id)
         self.assertIn(self.test_checklist, self.test_user2.checklists())
 
+    def test_list_aggregation_with_error(self):
+        self.assertNotIn(self.not_shared_checklist, self.test_user2.checklists())
+
     def test_list_sharing(self):
         self.test_checklist.share_with(self.test_user2.id)
         self.assertTrue(self.test_checklist.is_accessible_by(self.test_user1))
         self.assertTrue(self.test_checklist.is_accessible_by(self.test_user2))
+
+    def test_list_sharing_with_error(self):
+        self.test_checklist.share_with(self.test_user2.id)
+        self.assertTrue(self.not_shared_checklist.is_accessible_by(self.test_user1))
+        self.assertFalse(self.not_shared_checklist.is_accessible_by(self.test_user2))
