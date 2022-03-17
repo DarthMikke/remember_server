@@ -211,3 +211,30 @@ class UserAPITestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         body = json.loads(response.content)
         self.assertEqual(body['id'], self.profiles[1].id)
+
+
+class ProfileTestCase(TestCase):
+    test_password = 'test_password'
+
+    @classmethod
+    def setUpTestData(cls):
+        test_user1 = User.objects.create_user('test_user', 'test@ma.il', cls.test_password)
+        test_profile1 = Profile.objects.create(authentication='password', user=test_user1)
+        cls.test_user1 = test_profile1
+        test_user2 = User.objects.create_user('test_user_2', 'test@ma.il', cls.test_password)
+        test_profile2 = Profile.objects.create(authentication='password', user=test_user2)
+        cls.test_user2 = test_profile2
+
+    def setUp(self):
+        self.client = Client()
+
+        self.test_checklist = Checklist.objects.create(owner=self.test_user1, name="Test")
+
+    def test_list_aggregation(self):
+        self.test_checklist.share_with(self.test_user2.id)
+        self.assertIn(self.test_checklist, self.test_user2.checklists())
+
+    def test_list_sharing(self):
+        self.test_checklist.share_with(self.test_user2.id)
+        self.assertTrue(self.test_checklist.is_accessible_by(self.test_user1))
+        self.assertTrue(self.test_checklist.is_accessible_by(self.test_user2))
