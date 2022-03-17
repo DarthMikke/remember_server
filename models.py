@@ -19,6 +19,11 @@ class Profile(models.Model):
 
     name = models.CharField(max_length=200, null=True, blank=True)
 
+    def checklists(self):
+        return Checklist.objects.filter(
+            models.Q(owner=self) | models.Q(shared_with=self)
+        )
+
     def __str__(self):
         return self.name
 
