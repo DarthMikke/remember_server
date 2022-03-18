@@ -141,9 +141,10 @@ class ChecklistDeleteAPI(View):
 
         checklist = user.checklist_set.get(id=pk)
         # TODO: 404 if checklist is None
+        response = checklist.as_dict()
 
         checklist.delete()
-        return JsonResponse(checklist.as_dict())
+        return JsonResponse(response)
 
 
 class ChecklistShareAPI(View):
