@@ -114,8 +114,11 @@ class ChecklistReadAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        checklist = user.checklist_set.get(id=pk)
-        # TODO: 404 if checklist is None
+        try:
+            checklist = user.checklists().get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
+
         return JsonResponse(checklist.as_deep_dict())
 
 
