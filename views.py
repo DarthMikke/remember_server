@@ -71,8 +71,9 @@ class LoginAPI(View):
         if user is None:
             return JsonResponse({'error': 'wrong credentials'}, status=401)
 
-        profile = Profile.objects.get(user=user)
-        if profile is None:
+        try:
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
             return JsonResponse({'error': 'wrong credentials'}, status=401)
         # generate token
         token = generate_profile_token(profile).token
