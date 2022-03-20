@@ -350,4 +350,4 @@ class UserInfoMeAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        return HttpResponse(status=501)
+        return JsonResponse(user.as_dict())
