@@ -175,7 +175,11 @@ class ChecklistUnshareAPI(View):
         if 'profile' not in request.POST.keys():
             return JsonResponse({'error': 'bad request'}, status=400)
 
-        checklist = user.checklist_set.get(id=pk)
+        try:
+            checklist = user.checklists().get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
+
         result = checklist.unshare_with(int(request.POST['profile']))
         if not result:
             return JsonResponse({'error': 'user not found'}, status=404)
@@ -198,7 +202,10 @@ class ChoreCreateAPI(View):
             except ValueError as e:
                 return JsonResponse({'error': e}, status=400)
 
-        checklist = Checklist.objects.get(id=pk)
+        try:
+            checklist = user.checklists().objects.get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
         new_chore = checklist.add_chore(request.POST['name'], frequency)
         return JsonResponse(new_chore.as_dict())
 
