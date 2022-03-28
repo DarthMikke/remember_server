@@ -114,7 +114,6 @@ class ChecklistAPITestCase(TestCase):
             HTTP_TOKEN=self.token
         )
         self.assertEqual(response.status_code, 200)
-        print(response.content)
         self.assertEqual(self.user_list.is_accessible_by(self.profiles[0]), False)
 
 
@@ -247,3 +246,24 @@ class ProfileTestCase(TestCase):
         self.test_checklist.share_with(self.test_user2.id)
         self.assertTrue(self.not_shared_checklist.is_accessible_by(self.test_user1))
         self.assertFalse(self.not_shared_checklist.is_accessible_by(self.test_user2))
+
+    def test_reader_cannot_share_list(self):
+        ...
+
+    def test_user_can_remove_self_from_list(self):
+        self.test_checklist.share_with(self.test_user2.id)
+        self.assertTrue(self.test_checklist.is_accessible_by(self.test_user2))
+
+        test_data = {'username': self.test_user2.user.username, 'password': self.test_password}
+        response = self.client.post(reverse('api_login'), test_data)
+        self.assertTrue(response.status_code, 200)
+        body = json.loads(response.content)
+        token = body['access_token']
+
+        self.client.post(
+            reverse('checklist_unshare', args=[self.test_checklist.id]),
+            {'profile': self.test_user2.id},
+            HTTP_TOKEN=token
+        )
+
+        self.assertFalse(self.test_checklist.is_accessible_by(self.test_user2))
