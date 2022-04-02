@@ -1,26 +1,26 @@
 from django.shortcuts import render
 from django.views import View
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import generate_token, Checklist, Chore, Token, Record
+from .models import generate_profile_token, Checklist, Chore, Token, Record, Profile
 
 from datetime import datetime
 
 import uuid
 
 
-def authenticate_with_token(token: uuid.UUID or str) -> User or None:
+def authenticate_with_token(token: uuid.UUID or str) -> Profile or None:
     try:
         token = Token.objects.get(token=token)
     except Token.DoesNotExist as e:
         print(f"Incorrect token {token}: {e}")
         return None
 
-    return token.user
+    return token.profile
 
 
-def authenticate_request(request) -> User or None:
+def authenticate_request(request) -> Profile or None:
     if 'token' not in request.headers:
         print('No token found in the request.')
         return None
@@ -35,6 +35,9 @@ class ChoresView(View):
 
 
 class RegisterAPI(View):
+    """
+    Register using username, email and password.
+    """
     def post(self, request):
         keys = request.POST.keys()
         if not ('username' in keys and 'password' in keys and 'email' in keys):
@@ -47,11 +50,12 @@ class RegisterAPI(View):
         except User.DoesNotExist:
             pass
 
-        User.objects.create_user(
+        new_user = User.objects.create_user(
             username=request.POST['username'],
             password=request.POST['password'],
             email=request.POST['email']
         )
+        Profile.objects.create(authentication='password', user=new_user)
         return JsonResponse({'status': 'success'})
 
 
@@ -67,9 +71,13 @@ class LoginAPI(View):
         if user is None:
             return JsonResponse({'error': 'wrong credentials'}, status=401)
 
+        try:
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            return JsonResponse({'error': 'wrong credentials'}, status=401)
         # generate token
-        token = generate_token(user).token
-        return JsonResponse({'username': username, 'access_token': token})
+        token = generate_profile_token(profile).token
+        return JsonResponse({'username': username, 'name': profile.name, 'access_token': token})
 
 
 class LogoutAPI(View):
@@ -83,7 +91,7 @@ class ChecklistListAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        lists = {'checklists': [x.as_dict() for x in user.checklist_set.all()]}
+        lists = {'checklists': [x.as_dict() for x in user.checklists()]}
         return JsonResponse(lists)
 
 
@@ -106,8 +114,11 @@ class ChecklistReadAPI(View):
         if user is None:
             return JsonResponse({'error': 'not authenticated'}, status=401)
 
-        checklist = user.checklist_set.get(id=pk)
-        # TODO: 404 if checklist is None
+        try:
+            checklist = user.checklists().get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
+
         return JsonResponse(checklist.as_deep_dict())
 
 
@@ -134,8 +145,44 @@ class ChecklistDeleteAPI(View):
 
         checklist = user.checklist_set.get(id=pk)
         # TODO: 404 if checklist is None
+        response = checklist.as_dict()
 
         checklist.delete()
+        return JsonResponse(response)
+
+
+class ChecklistShareAPI(View):
+    def post(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'profile' not in request.POST.keys():
+            return JsonResponse({'error': 'bad request'}, status=400)
+
+        checklist = user.checklist_set.get(id=pk)
+        if not checklist.share_with(int(request.POST['profile'])):
+            return JsonResponse({'error': 'user not found'}, status=404)
+        return JsonResponse(checklist.as_dict())
+
+
+class ChecklistUnshareAPI(View):
+    def post(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'profile' not in request.POST.keys():
+            return JsonResponse({'error': 'bad request'}, status=400)
+
+        try:
+            checklist = user.checklists().get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
+
+        result = checklist.unshare_with(int(request.POST['profile']))
+        if not result:
+            return JsonResponse({'error': 'user not found'}, status=404)
         return JsonResponse(checklist.as_dict())
 
 
@@ -155,7 +202,10 @@ class ChoreCreateAPI(View):
             except ValueError as e:
                 return JsonResponse({'error': str(e)}, status=400)
 
-        checklist = Checklist.objects.get(id=pk)
+        try:
+            checklist = user.checklists().objects.get(id=pk)
+        except Checklist.DoesNotExist:
+            return JsonResponse({'error': 'checklist not found'}, status=404)
         new_chore = checklist.add_chore(request.POST['name'], frequency)
         return JsonResponse(new_chore.as_dict())
 
@@ -272,3 +322,39 @@ class LogDeleteAPI(View):
 
         log.delete()
         return JsonResponse(log.chore.as_deep_dict())
+
+
+class UserSearchAPI(View):
+    def get(self, request):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        if 'query' not in request.GET.keys():
+            return JsonResponse({'error': 'bad_request'}, status=400)
+
+        if request.GET['query'] == "":
+            return JsonResponse({'total': 0, 'profiles': []})
+
+        profiles = Profile.objects.filter(user__email__contains=request.GET['query'])
+        return JsonResponse({'total': len(profiles),
+                             'profiles': [x.as_dict() for x in profiles]})
+
+
+class UserInfoAPI(View):
+    def get(self, request, pk):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        profile = Profile.objects.get(id=pk)
+        return JsonResponse(profile.as_dict())
+
+
+class UserInfoMeAPI(View):
+    def get(self, request):
+        user = authenticate_request(request)
+        if user is None:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+
+        return JsonResponse(user.as_dict())
