@@ -118,16 +118,60 @@ class ChecklistAPITestCase(TestCase):
 
 
 class TaskAPITestCase(TestCase):
+    test_password = 'test_password'
+
+    @classmethod
+    def setUpTestData(cls):
+        test_user1 = User.objects.create_user('test_user', 'test@ma.il', cls.test_password)
+        test_profile1 = Profile.objects.create(authentication='password', user=test_user1)
+        cls.test_user1 = test_profile1
+        test_user2 = User.objects.create_user('test_user_2', 'test@ma.il', cls.test_password)
+        test_profile2 = Profile.objects.create(authentication='password', user=test_user2)
+        cls.test_user2 = test_profile2
+
+    def setUp(self):
+        self.client = Client()
+
+        self.test_checklist = Checklist.objects.create(owner=self.test_user1, name="Test")
+        self.not_shared_checklist = Checklist.objects.create(owner=self.test_user1, name="Test 2")
+        self.other_shared_checklist = Checklist.objects.create(owner=self.test_user2, name="Test 3")
+        self.other_shared_checklist.share_with(self.test_user1.id)
+
+        response = self.client.post(reverse('api_login'), test_data)
+        body = json.loads(response.content)
+        self.token = body['access_token']
+
     def test_add_task(self):
-        ...
+        response = self.client.post(
+            reverse('chore_add', args=[self.test_checklist.id]),
+            {'name': 'Test task', 'frequency': '7'},
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(response.status_code, 200)
+
+        task = Chore.objects.get(id=response.content['id'])
+        self.assertEqual(task.id, response.content['id'])
 
     def test_update_task(self):
         ...
+
+    def test_add_task_to_shared_checklist(self):
+        response = self.client.post(
+            reverse('chore_add', args=[self.other_shared_checklist.id]),
+            {'name': 'Test task', 'frequency': '7'},
+            HTTP_TOKEN=self.token
+        )
+        self.assertEqual(response.status_code, 200)
+
+        task = Chore.objects.get(id=response.content['id'])
+        self.assertEqual(task.id, response.content['id'])
 
     def test_delete_task(self):
         ...
 
     def test_log_task(self):
+        task = Chore.objects.create(name='Test task', frequency=7.0, checklist=self.test_checklist)
+        
         ...
 
     def test_log_someone_elses_task(self):
