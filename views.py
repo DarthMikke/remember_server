@@ -203,7 +203,7 @@ class ChoreCreateAPI(View):
                 return JsonResponse({'error': str(e)}, status=400)
 
         try:
-            checklist = user.checklists().objects.get(id=pk)
+            checklist = user.checklists().get(id=pk)
         except Checklist.DoesNotExist:
             return JsonResponse({'error': 'checklist not found'}, status=404)
         new_chore = checklist.add_chore(request.POST['name'], frequency)
