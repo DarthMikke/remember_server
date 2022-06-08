@@ -1,0 +1,31 @@
+{
+	"_links": {
+		"self": "/projects/{id}"
+	},
+	"_embedded": {
+		"tasks": [
+			{
+				"_links": {
+					"self": "/tasks/{id}"
+				},
+				"_embedded": {
+					"logs": [{
+						"id": "",
+						"duration": "",
+						"note": "",
+						"user": ""
+					}]
+				},
+				"id": "",
+				"name": "Walk the dog",
+				"repeating": 1.0,
+				"postponed_until": "2023-01-01"
+			},
+			
+		],
+		"workspaces": []
+	},
+	"id": "",
+	"owner": "test_profile_id",
+	"availability": [],
+}
